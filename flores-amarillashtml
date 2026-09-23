@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para Samanta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night-1:#0A0B22;
+    --night-2:#1B1240;
+    --gold:#F3C94D;
+    --gold-soft:#F7DA8A;
+    --violet:#9B6BC7;
+    --violet-soft:#C9A8E8;
+    --cream:#FBF3E1;
+    --lavender:#D9CFEE;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; height:100%; }
+
+  body{
+    font-family:'Quicksand', sans-serif;
+    color:var(--cream);
+    background:
+      radial-gradient(circle at 30% 15%, rgba(155,107,199,0.25), transparent 55%),
+      radial-gradient(circle at 75% 70%, rgba(243,201,77,0.10), transparent 50%),
+      linear-gradient(180deg, var(--night-1), var(--night-2));
+    min-height:100vh;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .stars{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    transition:opacity 1.6s ease;
+  }
+  .stars.dim{ opacity:0.35; }
+  .star{
+    position:absolute; width:2px; height:2px; border-radius:50%;
+    background:#FFF6DA; animation:twinkle 3.5s ease-in-out infinite; opacity:0.5;
+  }
+  @keyframes twinkle{ 0%,100%{opacity:.15;} 50%{opacity:.9;} }
+
+  .scene{ position:relative; min-height:100vh; z-index:1; overflow:hidden; }
+
+  .spotlight{
+    position:absolute; top:38%; left:50%;
+    width:75vmax; height:75vmax;
+    transform:translate(-50%,-50%) scale(0.2);
+    background:radial-gradient(circle, rgba(243,201,77,0.30) 0%, rgba(243,201,77,0.08) 35%, transparent 70%);
+    opacity:0;
+    transition:transform 2.3s cubic-bezier(.2,.8,.2,1), opacity 2.3s ease;
+    pointer-events:none; z-index:1;
+  }
+  .spotlight.on{ transform:translate(-50%,-50%) scale(1); opacity:1; }
+
+  /* ---------- Suelo / jardín ---------- */
+  .ground{
+    position:absolute; left:0; right:0; bottom:0;
+    height:20vh; width:100%;
+    transform-origin:bottom center;
+    transition:transform 2.4s cubic-bezier(.2,.8,.2,1), filter 2s ease;
+    z-index:2;
+    pointer-events:none;
+  }
+  .ground.focused{ transform:scale(1.18); filter:blur(4px) brightness(0.55); }
+  .ground svg{ display:block; width:100%; height:100%; }
+
+  /* ---------- Papel del ramo ---------- */
+  .wrap{
+    position:absolute; left:50%; top:40%;
+    width:44vmin; height:48vmin;
+    transform:translate(-50%,-4vmin) scale(0.8);
+    opacity:0;
+    transition:opacity 1.3s ease .5s, transform 1.3s cubic-bezier(.2,.8,.2,1) .5s;
+    pointer-events:none; z-index:3;
+  }
+  .wrap.focused{ opacity:1; transform:translate(-50%,10vmin) scale(1); }
+
+  /* ---------- Flores plantadas ---------- */
+  .flower-wrap{
+    position:absolute; bottom:12vh; left:calc(var(--x) * 1%);
+    width:var(--size); height:calc(var(--size) * 1.55);
+    transform:translate(-50%, 0) rotate(var(--tilt));
+    filter:blur(0.5px) brightness(0.82);
+    opacity:0.9;
+    transition:
+      transform 2.1s cubic-bezier(.16,.8,.2,1),
+      filter 1.8s ease,
+      opacity 1.6s ease;
+    transition-delay:var(--delay);
+    z-index:4;
+    pointer-events:none;
+  }
+  .flower-wrap.focused{
+    opacity:1;
+    filter:blur(0px) brightness(1) drop-shadow(0 0 13px var(--glow));
+    transform:
+      translate(calc(-50% + (50 - var(--x)) * 1vw + var(--tx) * 1vmin), calc(var(--ty0) * 1vh + var(--ty) * 1vmin))
+      scale(var(--tscale)) rotate(var(--r2));
+  }
+
+  .flower-inner{
+    width:100%; height:100%;
+    animation:sway 6.5s ease-in-out infinite;
+    animation-delay:var(--delay);
+    transform-origin:50% 78%;
+  }
+  @keyframes sway{ 0%,100%{transform:rotate(-2.5deg);} 50%{transform:rotate(2.5deg);} }
+
+  .stem-group{ transition:opacity .6s ease; opacity:1; }
+
+  /* ---------- Intro ---------- */
+  .intro{
+    position:relative; z-index:20;
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+    text-align:center; padding:24px;
+    transition:opacity .6s ease, transform .6s ease;
+  }
+  .intro.hidden{ opacity:0; transform:scale(.95); pointer-events:none; position:absolute; inset:0; }
+
+  .eyebrow{ font-size:.85rem; color:var(--violet-soft); opacity:.9; }
+  h1{
+    font-family:'Playfair Display', serif; font-weight:700;
+    font-size:clamp(2.6rem, 9vw, 4.2rem); margin:0; color:var(--cream);
+    text-shadow:0 0 30px rgba(243,201,77,0.45), 0 4px 24px rgba(0,0,0,0.6);
+    letter-spacing:0.01em;
+  }
+  .subtitle{ max-width:420px; font-size:1.02rem; line-height:1.55; color:var(--lavender); margin:0; }
+
+  button.deliver{
+    margin-top:14px; border:2px solid rgba(243,201,77,.85); cursor:pointer;
+    background:rgba(243,201,77,.16); color:var(--gold-soft);
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:1.3rem;
+    padding:20px 44px; border-radius:999px;
+    box-shadow:0 0 40px rgba(243,201,77,.35);
+    transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  button.deliver:hover{ transform:translateY(-2px); background:rgba(243,201,77,.28); box-shadow:0 0 54px rgba(243,201,77,.5); }
+  button.deliver:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+
+  /* ---------- Mensaje ---------- */
+  .message-wrap{
+    position:absolute; inset:0; z-index:30;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  .message-card{
+    background:linear-gradient(180deg, rgba(31,22,56,.97), rgba(20,14,40,.97));
+    border-radius:22px; padding:44px 34px; max-width:480px; width:calc(100% - 48px);
+    box-shadow:0 25px 60px rgba(0,0,0,.55), 0 0 40px rgba(155,107,199,.15);
+    border:1px solid rgba(243,201,77,.25);
+    opacity:0; transform:translateY(16px) scale(.97);
+    transition:opacity .8s ease, transform .8s ease;
+    pointer-events:none;
+  }
+  .message-card.show{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+  .message-card h2{
+    font-family:'Playfair Display', serif; font-style:italic; font-weight:500;
+    font-size:1.5rem; margin:0 0 16px; color:var(--gold-soft);
+  }
+
+  #mensaje-personal{
+    font-size:1.08rem; line-height:1.7; color:var(--lavender);
+    white-space:pre-line; text-align:left;
+  }
+
+  .signature{ margin-top:22px; font-family:'Playfair Display', serif; font-style:italic; font-size:1.05rem; color:var(--gold); }
+  .replay{
+    margin-top:26px; background:none; border:none; color:var(--violet-soft);
+    font-family:'Quicksand', sans-serif; font-weight:600; font-size:.9rem;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .flower-wrap, .spotlight, .message-card, .wrap, .ground, .stars{ transition:none; }
+    .flower-inner{ animation:none; }
+  }
+
+  .mute-btn{
+    position:fixed; top:18px; right:18px; z-index:50;
+    width:42px; height:42px; border-radius:50%;
+    border:1px solid rgba(243,201,77,.4);
+    background:rgba(20,14,40,.55);
+    backdrop-filter:blur(6px);
+    color:var(--gold-soft);
+    font-size:1.15rem;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .2s ease, transform .2s ease;
+  }
+  .mute-btn:hover{ background:rgba(243,201,77,.18); transform:translateY(-1px); }
+  .mute-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+</style>
+</head>
+<body>
+
+<button class="mute-btn" id="muteBtn" aria-label="Silenciar música de fondo" title="Música de fondo">🔊</button>
+
+<div class="stars" id="stars"></div>
+
+<div class="scene">
+  <div class="spotlight" id="spotlight"></div>
+
+  <div class="ground" id="ground">
+    <svg viewBox="0 0 1000 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1E2A1A"/>
+          <stop offset="100%" stop-color="#0C130D"/>
+        </linearGradient>
+      </defs>
+      <path d="M0,60 C150,20 320,70 500,45 C680,20 850,65 1000,35 L1000,200 L0,200 Z" fill="url(#groundGrad)"/>
+      <g id="grassBlades"></g>
+    </svg>
+  </div>
+
+  <svg class="wrap" id="wrap" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#C79A63"/>
+        <stop offset="100%" stop-color="#8B5E3C"/>
+      </linearGradient>
+    </defs>
+    <path d="M45,42 L155,42 L188,212 L12,212 Z" fill="url(#paper)"/>
+    <path d="M70,42 L95,212" stroke="#734B2C" stroke-width="2" opacity="0.4"/>
+    <path d="M130,42 L108,212" stroke="#734B2C" stroke-width="2" opacity="0.4"/>
+    <path d="M52,55 L148,55 L143,80 L57,80 Z" fill="#E3B84D"/>
+    <path d="M100,55 L70,80 L100,68 L130,80 Z" fill="#D9A93C"/>
+    <circle cx="100" cy="66" r="8" fill="#F3C94D" stroke="#B9862A" stroke-width="2"/>
+  </svg>
+
+  <div id="flowerField"></div>
+
+  <div class="intro" id="intro">
+    <h1>Para Samanta</h1>
+    <button class="deliver" id="deliverBtn">Entregar flores amarillas</button>
+  </div>
+
+  <div class="message-wrap">
+    <div class="message-card" id="messageCard">
+      <h2>Para samanta🌻</h2>
+
+      <p id="mensaje-personal">Hola mi vida,espero esto te guste mucho, lo hice con todo mi amor y con la intención de
+        hacer algo bonito para ti y que te recuerde lo mucho que te quiero. eres mi todo 
+        y no quiero que lo olvides nunca. desde que llegaste a mi vida me haces muy muy 
+        feliz y quiero que sepas que siempre voy a estar para ti.
+
+te quiere mucho, Jordan</p>
+
+      <p class="signature">— con cariño, para ti</p>
+
+      <button class="replay" id="replayBtn">Volver a armar el ramo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const starsEl = document.getElementById('stars');
+  const flowerField = document.getElementById('flowerField');
+  const intro = document.getElementById('intro');
+  const spotlight = document.getElementById('spotlight');
+  const ground = document.getElementById('ground');
+  const grassBlades = document.getElementById('grassBlades');
+  const wrapEl = document.getElementById('wrap');
+  const messageCard = document.getElementById('messageCard');
+  const deliverBtn = document.getElementById('deliverBtn');
+  const replayBtn = document.getElementById('replayBtn');
+
+  /* ---------- Sonidos (sintetizados, sin archivos externos) ---------- */
+  let audioCtx;
+  function ensureAudio(){
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function tone(freq, time, dur, type, peak, dest){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(peak || 0.15, time + 0.035);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    osc.connect(gain).connect(dest || audioCtx.destination);
+    osc.start(time);
+    osc.stop(time + dur + 0.05);
+  }
+
+  function playClickSound(){
+    ensureAudio();
+    const t = audioCtx.currentTime;
+    tone(523.25, t, 0.16, 'sine', 0.11);
+    tone(784.0, t + 0.03, 0.2, 'sine', 0.07);
+  }
+
+  function playGatherArpeggio(count, stepDelay){
+    ensureAudio();
+    const notes = [523.25, 587.33, 659.25, 783.99, 880.0, 987.77, 1174.66, 1318.51];
+    const t0 = audioCtx.currentTime + 0.15;
+    for (let i = 0; i < count; i++){
+      tone(notes[i % notes.length], t0 + i * stepDelay, 0.55, 'triangle', 0.075);
+    }
+  }
+
+  function playMessageChime(){
+    ensureAudio();
+    const t = audioCtx.currentTime;
+    tone(659.25, t, 1.2, 'sine', 0.14);
+    tone(987.77, t + 0.14, 1.4, 'sine', 0.1);
+    tone(1318.51, t + 0.3, 1.6, 'sine', 0.07);
+  }
+
+  /* ---------- Música de fondo tierna y romántica, sin archivos externos ---------- */
+  const CHORD_PROGRESSION = [
+    { bass:55.00, notes:[220.00, 277.18, 329.63], dur:5.8 }, // Am
+    { bass:65.41, notes:[174.61, 261.63, 349.23], dur:5.8 }, // F
+    { bass:73.42, notes:[146.83, 220.00, 293.66], dur:5.8 }, // G
+    { bass:69.30, notes:[207.65, 293.66, 392.00], dur:5.8 }, // C
+  ];
+
+  let musicGain = null;
+  let musicEnabled = true;
+  let musicStarted = false;
+  let chordIndex = 0;
+
+  function initMusicGain(){
+    if (!musicGain){
+      musicGain = audioCtx.createGain();
+      musicGain.gain.value = 0.18;
+      musicGain.connect(audioCtx.destination);
+    }
+  }
+
+  function scheduleChord(chord, startTime){
+    tone(chord.bass, startTime, chord.dur - 0.3, 'triangle', 0.04, musicGain);
+    chord.notes.forEach((freq, idx) => {
+      tone(freq, startTime + idx * 0.8, 2.7, 'sine', 0.03, musicGain);
+    });
+    tone(chord.notes[1], startTime + 1.0, 1.9, 'sine', 0.018, musicGain);
+    tone(chord.notes[2], startTime + 2.1, 1.7, 'triangle', 0.015, musicGain);
+
+    const melody = [chord.notes[0], chord.notes[1], chord.notes[2], chord.notes[1]];
+    melody.forEach((freq, idx) => {
+      tone(freq, startTime + idx * 1.2, 1.0, 'sine', 0.013, musicGain);
+    });
+  }
+
+  function musicLoop(){
+    const chord = CHORD_PROGRESSION[chordIndex % CHORD_PROGRESSION.length];
+    scheduleChord(chord, audioCtx.currentTime + 0.05);
+    chordIndex++;
+    setTimeout(musicLoop, chord.dur * 1000);
+  }
+
+  function startMusicOnce(){
+    ensureAudio();
+    initMusicGain();
+    if (!musicStarted){
+      musicStarted = true;
+      musicLoop();
+    }
+    if (musicEnabled && musicGain) {
+      musicGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      musicGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.6);
+    }
+  }
+
+  window.addEventListener('load', startMusicOnce, { once: true });
+  document.addEventListener('pointerdown', startMusicOnce, { once: true });
+  document.addEventListener('touchstart', startMusicOnce, { once: true });
+  document.addEventListener('keydown', startMusicOnce, { once: true });
+
+  const muteBtn = document.getElementById('muteBtn');
+  muteBtn.addEventListener('click', () => {
+    ensureAudio();
+    initMusicGain();
+    if (!musicStarted){ musicStarted = true; musicLoop(); }
+    musicEnabled = !musicEnabled;
+    const target = musicEnabled ? 0.18 : 0.0001;
+    musicGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    musicGain.gain.linearRampToValueAtTime(target, audioCtx.currentTime + 0.6);
+    muteBtn.textContent = musicEnabled ? '🔊' : '🔈';
+  });
+
+  /* ---------- Estrellas ---------- */
+  for (let i = 0; i < 60; i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 70 + '%';
+    s.style.animationDelay = (Math.random() * 3.5) + 's';
+    s.style.width = s.style.height = (0.8 + Math.random() * 1.6) + 'px';
+    starsEl.appendChild(s);
+  }
+
+  /* ---------- Pasto del suelo ---------- */
+  for (let i = 0; i < 70; i++){
+    const x = Math.random() * 1000;
+    const baseY = 55 + Math.sin(x / 160) * 15 + Math.random() * 15;
+    const h = 10 + Math.random() * 16;
+    const lean = (Math.random() - 0.5) * 10;
+    const blade = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    blade.setAttribute('d', `M${x},${baseY} C${x + lean * 0.5},${baseY - h * 0.6} ${x + lean},${baseY - h} ${x + lean * 1.3},${baseY - h - 4}`);
+    blade.setAttribute('stroke', Math.random() > 0.5 ? '#2E4023' : '#22301A');
+    blade.setAttribute('stroke-width', 1.6);
+    blade.setAttribute('fill', 'none');
+    blade.setAttribute('stroke-linecap', 'round');
+    grassBlades.appendChild(blade);
+  }
+
+  /* ---------- Flor realista (pétalos en capas + tallo + hoja) ---------- */
+  function petalPath(len, wid){
+    return `M50,52 C${50-wid},${52-len*0.35} ${50-wid*0.6},${52-len} 50,${52-len} `+
+          `C${50+wid*0.6},${52-len} ${50+wid},${52-len*0.35} 50,52 Z`;
+  }
+
+  function flowerSVG(id, colors, stemLen){
+    const backPetal = petalPath(30, 12);
+    const frontPetal = petalPath(23, 9);
+    const backAngles = [0,40,80,120,160,200,240,280,320];
+    const frontAngles = [20,60,100,140,180,220,260,300,340];
+
+    const seeds = Array.from({length:7}).map(() => {
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.random() * 4.5;
+      return `<circle cx="${50 + Math.cos(a)*r}" cy="${52 + Math.sin(a)*r}" r="0.9" fill="${colors.seed}" opacity="0.7"/>`;
+    }).join('');
+
+    return `
+      <svg viewBox="0 0 100 155" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="back-${id}" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stop-color="${colors.backBase}"/>
+            <stop offset="100%" stop-color="${colors.backTip}"/>
+          </linearGradient>
+          <linearGradient id="front-${id}" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stop-color="${colors.frontBase}"/>
+            <stop offset="100%" stop-color="${colors.frontTip}"/>
+          </linearGradient>
+          <radialGradient id="center-${id}" cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stop-color="${colors.centerLight}"/>
+            <stop offset="100%" stop-color="${colors.centerDark}"/>
+          </radialGradient>
+        </defs>
+
+        <g class="stem-group">
+          <path d="M50,68 C${48 + (stemLen%3)},${68 + stemLen*0.4} ${52 - (stemLen%3)},${68 + stemLen*0.75} 50,${68 + stemLen}"
+                fill="none" stroke="${colors.stem}" stroke-width="4" stroke-linecap="round"/>
+          <path d="M49,${68 + stemLen*0.45} C34,${64 + stemLen*0.45} 25,${72 + stemLen*0.45} 21,${86 + stemLen*0.45}
+                  C36,${86 + stemLen*0.45} 46,${80 + stemLen*0.45} 49,${68 + stemLen*0.45} Z" fill="${colors.leaf}"/>
+        </g>
+
+        <g transform="translate(0,-6)">
+          <g fill="url(#back-${id})">
+            ${backAngles.map(a => `<path d="${backPetal}" transform="rotate(${a} 50 52)"/>`).join('')}
+          </g>
+          <g fill="url(#front-${id})">
+            ${frontAngles.map(a => `<path d="${frontPetal}" transform="rotate(${a} 50 52)"/>`).join('')}
+          </g>
+          <circle cx="50" cy="52" r="11" fill="url(#center-${id})" stroke="${colors.centerDark}" stroke-width="0.6"/>
+          ${seeds}
+        </g>
+      </svg>
+    `;
+  }
+
+  const yellowPalette = {
+    backBase:'#E8A93C', backTip:'#F6D776',
+    frontBase:'#F3C94D', frontTip:'#FCE8A6',
+    centerLight:'#8A5A16', centerDark:'#5A3A0E', seed:'#3E2A0B',
+    stem:'#3F5A2E', leaf:'#557A3C', glow:'rgba(243,201,77,0.85)'
+  };
+  const violetPalette = {
+    backBase:'#8F5FBF', backTip:'#C9A8E8',
+    frontBase:'#B98CE0', frontTip:'#E4D2F5',
+    centerLight:'#6B4A8F', centerDark:'#3E2657', seed:'#2A1B3D',
+    stem:'#3F5A2E', leaf:'#557A3C', glow:'rgba(155,107,199,0.85)'
+  };
+
+  const FLOWER_COUNT = 16;
+  const GOLDEN_ANGLE = 137.5 * Math.PI / 180;
+  const MAX_RADIUS = 13;        // vmin, tamaño del ramo ya reunido
+  const FLOWER_BOTTOM = 12;     // vh, altura del anclaje al suelo
+  const TARGET_TOP_VH = 38;     // vh, dónde queda el centro del ramo en pantalla
+  const flowers = [];
+
+  for (let i = 0; i < FLOWER_COUNT; i++){
+    const isPurple = i === 2 || i === 6 || i === 11; // moradas de acento, repartidas
+    const colors = isPurple ? violetPalette : yellowPalette;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'flower-wrap';
+
+    // posición plantada en el suelo, repartidas a lo largo del ancho
+    const xBase = 2 + (i + 0.5) / FLOWER_COUNT * 92;
+    const x = xBase + (Math.random() - 0.5) * 4;
+    const sizeVh = 24 + Math.random() * 11; // alto total de la flor (tallo incluido)
+    const stemLen = 50 + Math.random() * 24;
+    const tilt = (Math.random() - 0.5) * 8 + 'deg';
+
+    // posición final: espiral áurea compacta = forma de ramo real
+    const radius = MAX_RADIUS * Math.sqrt((i + 0.5) / FLOWER_COUNT);
+    const angle = i * GOLDEN_ANGLE;
+    const tx = (radius * Math.cos(angle)).toFixed(2);
+    const tySpiral = (radius * Math.sin(angle) * 0.85).toFixed(2);
+
+    const bloomFromBottom = FLOWER_BOTTOM + sizeVh * 0.74;
+    const bloomFromTop = 100 - bloomFromBottom;
+    const ty0 = (TARGET_TOP_VH - bloomFromTop).toFixed(2);
+
+    // flores más centrales del ramo = más grandes y al frente
+    const scale = (1.7 - (radius / MAX_RADIUS) * 0.65).toFixed(2);
+    const r2 = ((Math.random() - 0.5) * 16).toFixed(1) + 'deg';
+    const delay = (i * 0.1).toFixed(2) + 's';
+
+    wrap.style.setProperty('--x', x.toFixed(1));
+    wrap.style.setProperty('--size', sizeVh.toFixed(1) + 'vh');
+    wrap.style.setProperty('--tilt', tilt);
+    wrap.style.setProperty('--tx', tx);
+    wrap.style.setProperty('--ty', tySpiral);
+    wrap.style.setProperty('--ty0', ty0);
+    wrap.style.setProperty('--tscale', scale);
+    wrap.style.setProperty('--r2', r2);
+    wrap.style.setProperty('--delay', delay);
+    wrap.style.setProperty('--glow', colors.glow);
+    wrap.style.zIndex = Math.max(4, 12 - Math.round(radius));
+
+    const inner = document.createElement('div');
+    inner.className = 'flower-inner';
+    inner.style.animationDelay = delay;
+    inner.innerHTML = flowerSVG(i, colors, stemLen);
+
+    wrap.appendChild(inner);
+    flowerField.appendChild(wrap);
+    flowers.push(wrap);
+  }
+
+  /* ---------- Secuencia de entrega ---------- */
+  function deliver(){
+    starsEl.classList.add('dim');
+    ground.classList.add('focused');
+    spotlight.classList.add('on');
+    wrapEl.classList.add('focused');
+    flowers.forEach(f => f.classList.add('focused'));
+
+    playClickSound();
+    playGatherArpeggio(FLOWER_COUNT, 0.1);
+
+    setTimeout(() => {
+      messageCard.classList.add('show');
+      playMessageChime();
+    }, 2700);
+  }
+
+  function reset(){
+    messageCard.classList.remove('show');
+    starsEl.classList.remove('dim');
+    ground.classList.remove('focused');
+    spotlight.classList.remove('on');
+    wrapEl.classList.remove('focused');
+    flowers.forEach(f => f.classList.remove('focused'));
+    setTimeout(deliver, 600);
+  }
+
+  // Iniciar música al ejecutar el código, incluso antes de tocar la pantalla.
+  startMusicOnce();
+
+  deliverBtn.addEventListener('click', () => {
+    intro.classList.add('hidden');
+    deliver();
+  });
+
+  replayBtn.addEventListener('click', reset);
+</script>
+
+</body>
+</html>
